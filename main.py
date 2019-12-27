@@ -1,39 +1,12 @@
 import tkinter as tk
-import firebase_service
+import gui
+import pi
 
-root = tk.Tk()
-frame = tk.Frame(root)
-frame.pack()
+# ROOM = "50_milk_women_1"
+ROOM = "50_milk_women_2"
+USE_GUI = 1
 
-button = tk.Button(frame,
-                   text="QUIT",
-                   fg="red",
-                   command=quit)
-button.pack(side=tk.LEFT)
-
-add_room = tk.Button(frame,
-                   text="add_room",
-                   command=lambda: firebase_service.add_room("50_milk_women_1"))
-add_room.pack(side=tk.LEFT)
-
-delete_room = tk.Button(frame,
-                   text="delete_room",
-                   command=firebase_service.delete_room)
-delete_room.pack(side=tk.LEFT)
-
-update_room = tk.Button(frame,
-                   text="update_room",
-                   command=firebase_service.update_room)
-update_room.pack(side=tk.LEFT)
-
-get_room = tk.Button(frame,
-                   text="get_room",
-                   command=firebase_service.get_room)
-get_room.pack(side=tk.LEFT)
-
-get_all_rooms = tk.Button(frame,
-                   text="get_all_rooms",
-                   command=firebase_service.get_all_rooms)
-get_all_rooms.pack(side=tk.LEFT)
-
-root.mainloop()
+if USE_GUI:
+    gui.init(ROOM)
+else:
+    print("USE_PI")
