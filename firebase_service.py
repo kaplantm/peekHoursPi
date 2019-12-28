@@ -21,66 +21,42 @@ def add_room(room_name):
 
 @firestore.transactional
 def increment_usage(transaction, room_name, year, month, day, hour, increment_amount):
-    # TODO make sure parent collection exists
     print ("update_room_day")
     room_ref = db.collection(u'rooms').document(room_name)
-    year_ref = room_ref.collection(u'years').document(str(year))
-    month_ref = year_ref.collection(u'months').document(str(month))
-    day_ref = month_ref.collection(u'days').document(str(day))
-    hour_ref = day_ref.collection(u'hours').document(str(hour))
+    months_by_year_ref = room_ref.collection(u'months_by_year').document(year)
+    hours_by_days_ref = room_ref.collection(u'hours_by_days').document(day)
 
-    year_snapshot = year_ref.get(transaction=transaction)
-    month_snapshot = month_ref.get(transaction=transaction)
-    day_snapshot = day_ref.get(transaction=transaction)
-    hour_snapshot = hour_ref.get(transaction=transaction)
+    months_by_year_dict = months_by_year_ref.get(transaction=transaction).to_dict() or {}
+    hours_by_days_dict = hours_by_days_ref.get(transaction=transaction).to_dict() or {}
 
-    old_year_usage = year_snapshot.get(u'usage');
-    old_month_usage = month_snapshot.get(u'usage');
-    old_day_usage = day_snapshot.get(u'usage');
-    old_hour_usage = hour_snapshot.get(u'usage');
+    old_month_by_year_value = months_by_year_dict[month] if months_by_year_dict and month in months_by_year_dict else 0;
+    old_hours_by_days_value = hours_by_days_dict[hour] if hours_by_days_dict and hour in hours_by_days_dict else 0;
 
-    print("old_hour_usage", old_hour_usage)
-    transaction.set(year_ref, {
-        u'usage': old_year_usage + 1 if old_year_usage else 1,
-    }),
-    transaction.set(month_ref, {
-        u'usage': old_month_usage + 1 if old_month_usage else 1,
-    })
-    transaction.set(day_ref, {
-        u'usage': old_day_usage + 1 if old_day_usage else 1,
-    })
-    transaction.set(hour_ref, {
-        u'usage': old_hour_usage + 1 if old_hour_usage else 1,
-    })
+    months_by_year_dict[month] =  old_month_by_year_value + increment_amount
+    hours_by_days_dict[hour] = old_hours_by_days_value + increment_amount
+
+    transaction.set(months_by_year_ref, months_by_year_dict),
+    transaction.set(hours_by_days_ref, hours_by_days_dict)
 
 
-def get_room_aggregate_year_data(room_name):
-    data_ref = db.collection(u'rooms').document(room_name).collection(u'years')
+def get_collection(room_name, collection):
+    data_ref = db.collection(u'rooms').document(room_name).collection(collection)
     docs = data_ref.stream()
     printDocs(docs)
 
 
-def get_room_aggregate_month_data(room_name, year):
-    data_ref = db.collection(u'rooms').document(room_name).collection(u'years').document(str(year)).collection(u'months')
-    docs = data_ref.stream()
+def get_collection_document(room_name, collection, document):
+    data_ref = db.collection(u'rooms').document(room_name).collection(collection).document(document).get()
+    printDoc(data_ref)
 
-    printDocs(docs)
 
-def get_room_aggregate_day_data(room_name, year, month):
-    data_ref = db.collection(u'rooms').document(room_name).collection(u'years').document(str(year)).collection(u'months')\
-        .document(str(month)).collection(u'days')
-    docs = data_ref.stream()
-    printDocs(docs)
 
-def get_room_aggregate_hour_data(room_name, year, month, day):
-    data_ref = db.collection(u'rooms').document(room_name).collection(u'years').document(str(year)).collection(u'months')\
-        .document(str(month)).collection(u'days').document(str(day)).collection(u'hours')
-    docs = data_ref.stream()
-    printDocs(docs)
+def printDoc(doc):
+        print(u'{} => {}'.format(doc.id, doc.to_dict()))
 
 def printDocs(docs):
     for doc in docs:
-        print(u'{} => {}'.format(doc.id, doc.to_dict()))
+        printDoc(doc)
 
 def get_all_rooms():
     print ("get_all_rooms")
